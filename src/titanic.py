@@ -10,6 +10,30 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder
 
+from omegaconf import OmegaConf
+
+import os
+
+dirname = os.path.dirname(__file__)
+
+config_file = os.path.join(dirname, '../conf/config.yaml')
+
+titanic_csv = os.path.join(dirname, '../data/raw/Titanic-Dataset.csv')
+
+processed_train_csv = os.path.join(dirname, '../data/processed/processed_titanic_train.csv')
+
+processed_test_csv = os.path.join(dirname, '../data/processed/processed_titanic_test.csv')
+
+preprocess_pipeline = os.path.join(dirname, '../models/preprocessing_pipeline.pkl')
+
+rf_path = os.path.join(dirname, '../models/random_forest_model.pkl')
+
+logisticRegression_path = os.path.join(dirname, '../models/logistic_regression_model.pkl')
+
+conf = OmegaConf.load(config_file)
+
+
+
 
 # Custom column dropper transformer
 class ColumnDropper(BaseEstimator, TransformerMixin):
@@ -24,7 +48,7 @@ class ColumnDropper(BaseEstimator, TransformerMixin):
 
 
 # Load data
-df = pd.read_csv("/home/hesham/MLOPS_project/data/raw/Titanic-Dataset.csv")
+df = pd.read_csv(titanic_csv)
 X = df.drop("Survived", axis=1)
 y = df["Survived"]
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -73,18 +97,14 @@ preprocessed_train = pd.DataFrame(
     columns=numerical_features + ["Sex", "Pclass", "Embarked_C", "Embarked_Q", "Embarked_S"],
 )
 preprocessed_train["Survived"] = y_train.values
-preprocessed_train.to_csv(
-    "/home/hesham/MLOPS_project/data/processed/processed_titanic_train.csv", index=False
-)
+preprocessed_train.to_csv(processed_train_csv, index=False)
 
 preprocessed_test = pd.DataFrame(
     X_test_preprocessed,
     columns=numerical_features + ["Sex", "Pclass", "Embarked_C", "Embarked_Q", "Embarked_S"],
 )
 preprocessed_test["Survived"] = y_test.values
-preprocessed_test.to_csv(
-    "/home/hesham/MLOPS_project/data/processed/processed_titanic_test.csv", index=False
-)
+preprocessed_test.to_csv(processed_test_csv, index=False)
 
 # Train models on preprocessed data
 rf = RandomForestClassifier(n_estimators=100, random_state=42)
@@ -94,13 +114,13 @@ rf.fit(X_train_preprocessed, y_train)
 lr.fit(X_train_preprocessed, y_train)
 
 # Save models and preprocessing pipeline
-with open("/home/hesham/MLOPS_project/models/preprocessing_pipeline.pkl", "wb") as f:
+with open(preprocess_pipeline, "wb") as f:
     pickle.dump(preprocessing_pipeline, f)
 
-with open("/home/hesham/MLOPS_project/models/random_forest_model.pkl", "wb") as f:
+with open(rf_path, "wb") as f:
     pickle.dump(rf, f)
 
-with open("/home/hesham/MLOPS_project/models/logistic_regression_model.pkl", "wb") as f:
+with open(logisticRegression_path, "wb") as f:
     pickle.dump(lr, f)
 
 print("Preprocessed data and models saved successfully")
